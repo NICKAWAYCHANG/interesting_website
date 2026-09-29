@@ -795,8 +795,11 @@
   const chars = [];
 
   // Arm before the first paint: the characters exist but stay invisible,
-  // so the card never flashes the finished invitation.
-  if (!reduce) $("script").classList.add("armed");
+  // so the card never flashes the finished invitation. The writing itself
+  // runs even under reduced-motion — it is a gentle reveal, not the kind
+  // of movement that setting exists to suppress — just faster, with no
+  // travelling nib. (iOS「減少動態效果」 otherwise skipped it entirely.)
+  $("script").classList.add("armed");
 
   for (const ln of lines){
     const text = ln.dataset.line || "";
@@ -829,15 +832,21 @@
   }
 
   function write(){
-    if (reduce){ finishWriting(); return; }
+    // Under reduced-motion the words still appear one by one, just quicker
+    // and without the ink-wipe or the moving nib.
+    const quick = reduce;
 
-    chars.forEach(c => c.classList.add("pending"));
-    nib.style.opacity = "1";
+    if (!quick){
+      chars.forEach(c => c.classList.add("pending"));
+      nib.style.opacity = "1";
+    }
 
     let i = 0;
+    const step  = quick ? 45 : 118;
+    const start = quick ? 80 : 260;
     // Backstop: however the per-character loop fares, the invitation is
     // fully legible by this deadline.
-    const guard = setTimeout(finishWriting, 260 + chars.length * 130 + 1500);
+    const guard = setTimeout(finishWriting, start + chars.length * (step + 12) + 1500);
 
     const tick = () => {
       if (i >= chars.length){
@@ -847,16 +856,19 @@
       }
       const ch = chars[i];
       ch.classList.add("seen");     // now visible, mid-wipe
-      ch.classList.add("inked");
-      // hand off to the painted resting state once the wipe has played
-      setTimeout(() => ch.classList.remove("pending"), 200);
-      moveNib(ch);
+      if (!quick){
+        ch.classList.add("inked");
+        // hand off to the painted resting state once the wipe has played
+        setTimeout(() => ch.classList.remove("pending"), 200);
+        moveNib(ch);
+      }
       const c = ch.textContent;
-      const pause = /\s/.test(c) ? 40 : /[（）／/、，。？]/.test(c) ? 90 : 118;
+      const pause = quick ? step
+                  : /\s/.test(c) ? 40 : /[（）／/、，。？]/.test(c) ? 90 : step;
       i++;
       setTimeout(tick, pause);
     };
-    setTimeout(tick, 260);
+    setTimeout(tick, start);
   }
 
   /* ---------------------------------------------------------
@@ -871,7 +883,7 @@
     startMusic();                       // the one gesture mobile will honour
     env.classList.add("is-open");
     env.setAttribute("aria-expanded","true");
-    const flapMs = reduce ? 0 : 1000;
+    const flapMs = reduce ? 260 : 1000;
     setTimeout(() => {
       env.classList.add("gone");
       $("card").classList.add("up");
