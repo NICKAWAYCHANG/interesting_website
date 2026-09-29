@@ -633,10 +633,14 @@
   #yt{ position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; left:-10px; top:-10px; border:0; }
   #bgm{ position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; left:-10px; top:-10px; }
 
+  /* Reduced-motion here suppresses only the genuinely restless things:
+     the looping hint pulse and the equaliser bars. The invitation's own
+     reveal — envelope, card, handwriting — is a slow one-shot sequence,
+     not the kind of motion that setting exists to prevent, so it plays
+     at full length on every device. */
   @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; }
-    .flap, .card, .seal, .choices, .ch{ transition-duration:.01ms !important; }
     .env-hint{ animation:none; }
+    .eq i{ animation:none; }
   }
 </style>
 
@@ -782,7 +786,6 @@
 (function(){
   "use strict";
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (id) => document.getElementById(id);
 
   /* ---------------------------------------------------------
@@ -831,22 +834,19 @@
     $("choices").classList.add("in");
   }
 
+  /* The same writing sequence on every device. The system's reduced-motion
+     preference no longer shortens it: the ink wipe and travelling nib are
+     driven per character from JS, so they play even where CSS transitions
+     are being cut short elsewhere. */
   function write(){
-    // Under reduced-motion the words still appear one by one, just quicker
-    // and without the ink-wipe or the moving nib.
-    const quick = reduce;
-
-    if (!quick){
-      chars.forEach(c => c.classList.add("pending"));
-      nib.style.opacity = "1";
-    }
+    chars.forEach(c => c.classList.add("pending"));
+    nib.style.opacity = "1";
 
     let i = 0;
-    const step  = quick ? 45 : 118;
-    const start = quick ? 80 : 260;
+    const step = 118;
     // Backstop: however the per-character loop fares, the invitation is
     // fully legible by this deadline.
-    const guard = setTimeout(finishWriting, start + chars.length * (step + 12) + 1500);
+    const guard = setTimeout(finishWriting, 260 + chars.length * (step + 12) + 1500);
 
     const tick = () => {
       if (i >= chars.length){
@@ -856,19 +856,25 @@
       }
       const ch = chars[i];
       ch.classList.add("seen");     // now visible, mid-wipe
-      if (!quick){
-        ch.classList.add("inked");
-        // hand off to the painted resting state once the wipe has played
-        setTimeout(() => ch.classList.remove("pending"), 200);
-        moveNib(ch);
+      // Drive the wipe with the Web Animations API rather than a CSS
+      // transition: a reduced-motion device may clamp transition-duration,
+      // but an explicit animation keeps its own timing.
+      if (ch.animate){
+        ch.animate(
+          [{ backgroundPosition: "100% 0" }, { backgroundPosition: "0 0" }],
+          { duration: 170, easing: "linear", fill: "forwards" }
+        );
       }
+      ch.classList.add("inked");
+      // hand off to the painted resting state once the wipe has played
+      setTimeout(() => ch.classList.remove("pending"), 200);
+      moveNib(ch);
       const c = ch.textContent;
-      const pause = quick ? step
-                  : /\s/.test(c) ? 40 : /[（）／/、，。？]/.test(c) ? 90 : step;
+      const pause = /\s/.test(c) ? 40 : /[（）／/、，。？]/.test(c) ? 90 : step;
       i++;
       setTimeout(tick, pause);
     };
-    setTimeout(tick, start);
+    setTimeout(tick, 260);
   }
 
   /* ---------------------------------------------------------
@@ -883,12 +889,34 @@
     startMusic();                       // the one gesture mobile will honour
     env.classList.add("is-open");
     env.setAttribute("aria-expanded","true");
-    const flapMs = reduce ? 260 : 1000;
+
+    // Explicit animations for the opening beats, so a device that clamps
+    // CSS transition-duration still sees the flap swing and the card rise.
+    const flap = document.querySelector(".flap");
+    const seal = document.querySelector(".seal");
+    const card = $("card");
+    if (flap && flap.animate){
+      flap.animate([{ transform:"rotateX(0deg)" }, { transform:"rotateX(-172deg)" }],
+        { duration:1050, easing:"cubic-bezier(.62,.03,.3,1)", fill:"forwards" });
+    }
+    if (seal && seal.animate){
+      seal.animate([{ transform:"translate(-50%,-50%) scale(1) rotate(0deg)", opacity:1 },
+                    { transform:"translate(-50%,-50%) scale(.7) rotate(-14deg)", opacity:0 }],
+        { duration:500, easing:"ease", fill:"forwards" });
+    }
+    if (card && card.animate){
+      setTimeout(() => {
+        card.animate([{ opacity:0, transform:"translateY(26px) scale(.97)" },
+                      { opacity:1, transform:"none" }],
+          { duration:900, easing:"cubic-bezier(.2,.8,.24,1)", fill:"forwards" });
+      }, 1000);
+    }
+    // the flap, seal and card play their full sequence on every device
     setTimeout(() => {
       env.classList.add("gone");
       $("card").classList.add("up");
-      setTimeout(write, reduce ? 0 : 420);
-    }, flapMs);
+      setTimeout(write, 420);
+    }, 1000);
   }
   env.addEventListener("click", open);
 
@@ -1140,7 +1168,7 @@
   }
 
   function celebrate(){
-    if (reduce) return;
+    // fireworks and petals run everywhere; they are the point of saying yes
     const cv = $("fx");
     const ctx = cv.getContext("2d");
     cv.classList.add("on");
