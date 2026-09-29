@@ -667,7 +667,7 @@
     <div class="panel" id="p-yes">
       <!-- the picture stands where the line used to; the closing words
            arrive only once the restaurant is settled -->
-      <img class="cat cat-hero" id="yes-cat" src="yes-cat.png" alt="" width="99" height="120">
+      <img class="cat cat-hero" id="yes-cat" src="yes-cat.png" alt="" width="340" height="390">
       <p class="big-script one-line" id="yes-done" hidden>那就這麼決定了，到時候見<span class="emo">🤙🏻</span></p>
       <p class="note" id="yes-hint">餐廳交給妳挑，點店名可以看 Google 地圖。</p>
 
@@ -738,7 +738,7 @@
     <div class="panel" id="p-no">
       <!-- image beside the words; the two lines are the message itself -->
       <div class="beside" id="no-head">
-        <img class="cat" id="no-cat" src="no-cat.png" alt="" width="159" height="187">
+        <img class="cat" id="no-cat" src="no-cat.png" alt="" width="340" height="393">
         <p class="beside-text">
           <span class="beside-lead" id="no-lead">那…什麼時候可以呢？</span>
           <span class="beside-sub" id="no-sub">寫下妳方便的時間，我配合妳。</span>
@@ -888,6 +888,25 @@
   const W3_KEY    = "a9523b48-ea54-47a2-b50e-43770258a082";
   let lastAnswer  = null;   // {answer, venue, when}
 
+  /* Fetch and decode the mood images up front. Swapping `src` on click
+     would otherwise start the download at that moment, so the picture
+     lagged behind the text it was supposed to change with. */
+  const preloaded = new Map();
+  function preload(src){
+    const img = new Image();
+    const done = img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+    img.src = src;
+    preloaded.set(src, done);
+    return done;
+  }
+  ["time-cat.png", "no-cat.png", "yes-cat.png"].forEach(preload);
+
+  // swap only once the bytes are ready, so image and words land together
+  async function setCat(el, src){
+    await (preloaded.get(src) || preload(src));
+    el.src = src;
+  }
+
   // emoji carries its own class so it can be sized against the script face
   function setLead(el, text, emoji){
     el.textContent = text;
@@ -1001,7 +1020,7 @@
     // put the pictures and their words back to the unanswered state
     $("yes-done").hidden = true;
     $("yes-hint").hidden = false;
-    $("no-cat").src = "no-cat.png";
+    setCat($("no-cat"), "no-cat.png");   // preloaded, so this is immediate
     setLead($("no-lead"), "那…什麼時候可以呢？", "");
     $("no-sub").textContent  = "寫下妳方便的時間，我配合妳。";
 
@@ -1078,8 +1097,8 @@
     }
     $("send-when").disabled = true;
     $("send-when").textContent = "送出中…";
-    // the mood turns once a time is offered
-    $("no-cat").src = "time-cat.png";
+    // the mood turns once a time is offered — picture and words together
+    await setCat($("no-cat"), "time-cat.png");
     setLead($("no-lead"), "已收到，肯定盡量配合", "👍🏻");
     $("no-sub").textContent = "我再跟妳敲確切的時間。";
     $("when").readOnly = true;
