@@ -667,7 +667,7 @@
     <div class="panel" id="p-yes">
       <!-- the picture stands where the line used to; the closing words
            arrive only once the restaurant is settled -->
-      <img class="cat cat-hero" id="yes-cat" src="yes-cat.png" alt="" width="340" height="390">
+      <img class="cat cat-hero" id="yes-cat" src="yes1-cat.png" alt="" width="340" height="364">
       <p class="big-script one-line" id="yes-done" hidden>那就這麼決定了，到時候見<span class="emo">🤙🏻</span></p>
       <p class="note" id="yes-hint">餐廳交給妳挑，點店名可以看 Google 地圖。</p>
 
@@ -899,7 +899,7 @@
     preloaded.set(src, done);
     return done;
   }
-  ["time-cat.png", "no-cat.png", "yes-cat.png"].forEach(preload);
+  ["yes1-cat.png", "yes-cat.png", "no-cat.png", "time-cat.png"].forEach(preload);
 
   // swap only once the bytes are ready, so image and words land together
   async function setCat(el, src){
@@ -1020,7 +1020,9 @@
     // put the pictures and their words back to the unanswered state
     $("yes-done").hidden = true;
     $("yes-hint").hidden = false;
-    setCat($("no-cat"), "no-cat.png");   // preloaded, so this is immediate
+    // both panels go back to their opening mood (preloaded, so immediate)
+    setCat($("yes-cat"), "yes1-cat.png");
+    setCat($("no-cat"), "no-cat.png");
     setLead($("no-lead"), "那…什麼時候可以呢？", "");
     $("no-sub").textContent  = "寫下妳方便的時間，我配合妳。";
 
@@ -1075,6 +1077,7 @@
     // the closing words replace the prompt now that it is settled; the
     // list stays so the chosen restaurant is still on screen, but the
     // unpicked options fade back and nothing more can be changed
+    await setCat($("yes-cat"), "yes-cat.png");   // 喜1 → 喜2
     $("yes-hint").hidden = true;
     $("yes-done").hidden = false;
     $("places").classList.add("settled");
