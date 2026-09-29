@@ -391,9 +391,14 @@
   /* The cutouts are transparent PNGs of the cat alone, so they sit
      directly on the paper — no disc, no mask, no blend mode. A soft
      drop shadow keeps them from looking pasted on. */
+  /* All four cutouts share one canvas (348x356) with the cat body scaled
+     to the same box and sitting on the same baseline, so swapping the
+     src cannot shift the layout or change the cat's apparent size.
+     `aspect-ratio` holds the slot even before an image decodes. */
   .cat{
     display:block;
     height:auto;
+    aspect-ratio:348 / 356;
     filter:drop-shadow(0 3px 5px rgba(23,19,15,.18));
   }
 
@@ -667,7 +672,7 @@
     <div class="panel" id="p-yes">
       <!-- the picture stands where the line used to; the closing words
            arrive only once the restaurant is settled -->
-      <img class="cat cat-hero" id="yes-cat" src="yes1-cat.png" alt="" width="340" height="364">
+      <img class="cat cat-hero" id="yes-cat" src="yes1-cat.png" alt="" width="348" height="356">
       <p class="big-script one-line" id="yes-done" hidden>那就這麼決定了，到時候見<span class="emo">🤙🏻</span></p>
       <p class="note" id="yes-hint">餐廳交給妳挑，點店名可以看 Google 地圖。</p>
 
@@ -738,7 +743,7 @@
     <div class="panel" id="p-no">
       <!-- image beside the words; the two lines are the message itself -->
       <div class="beside" id="no-head">
-        <img class="cat" id="no-cat" src="no-cat.png" alt="" width="340" height="393">
+        <img class="cat" id="no-cat" src="no-cat.png" alt="" width="348" height="356">
         <p class="beside-text">
           <span class="beside-lead" id="no-lead">那…什麼時候可以呢？</span>
           <span class="beside-sub" id="no-sub">寫下妳方便的時間，我配合妳。</span>
