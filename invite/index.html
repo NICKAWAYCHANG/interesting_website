@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>給妳的邀請函</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+</head>
+<body>
+<style>
+  /* ============================================================
+     A letterpress invitation.
+     Deliberately single-theme: this is a physical paper object,
+     and paper has no dark mode. Ground and ink are fixed choices.
+     ============================================================ */
+  :root{
+    --ink:      #17130F;
+    --ink-soft: #4A4036;
+    --paper:    #EFE7D7;
+    --paper-hi: #F8F3E8;
+    --wax:      #8C2F2A;
+    --wax-dp:   #5E1E1A;
+    --foil:     #C0982F;
+    --grey:     #6B6256;
+    --env:      #DCCFB6;
+    --env-dk:   #C3B293;
+    --env-sh:   #A89673;
+
+    --hand: "Xingkai SC", "Hanzipen SC", "Hannotate SC", "Kaiti SC",
+            "Kaiti TC", "BiauKai", "DFKai-SB", "標楷體", "楷体",
+            "Brush Script MT", cursive, serif;
+    --body: "PingFang TC", "PingFang SC", "Hiragino Sans CNS",
+            "Microsoft JhengHei", "Heiti TC", sans-serif;
+
+    --step--1: clamp(.78rem, .4vw + .7rem, .88rem);
+    --step-0:  clamp(1rem, .6vw + .88rem, 1.15rem);
+    --step-1:  clamp(1.25rem, 1.2vw + 1rem, 1.7rem);
+    --step-2:  clamp(1.6rem, 2.4vw + 1.05rem, 2.6rem);
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    min-height:100svh;
+    display:grid;
+    place-items:center;
+    padding:clamp(1rem,4vw,3rem) 1rem;
+    background:
+      radial-gradient(120% 90% at 50% 0%,   #2C2622 0%, #191512 55%, #100D0B 100%);
+    color:var(--ink);
+    font-family:var(--body);
+    overflow-x:hidden;
+  }
+
+  /* faint paper grain over the whole stage */
+  body::after{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:99;
+    opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter>\
+<rect width='140' height='140' filter='url(%23n)'/></svg>");
+  }
+
+  /* The envelope and the card are stacked in one grid cell, so the
+     stage keeps the height of whichever is taller and the card stays
+     centred after the envelope fades out. */
+  .stage{
+    position:relative;
+    width:min(100%, 44rem);
+    display:grid;
+    /* `minmax(0,...)` stops a nowrap child from widening the whole column */
+    grid-template-areas:"stack";
+    grid-template-columns:minmax(0, 1fr);
+    place-items:center;
+  }
+  .stage > *{ grid-area:stack; min-width:0; }
+
+  /* ---------------- envelope ---------------- */
+  .envelope{
+    position:relative;
+    width:min(100%, 34rem);
+    aspect-ratio:3 / 2;
+    cursor:pointer;
+    border:0; padding:0;
+    background:transparent;
+    font:inherit; color:inherit;
+    perspective:1400px;
+    transition:opacity .7s ease, transform .7s ease;
+  }
+  .envelope:focus-visible{ outline:2px solid var(--foil); outline-offset:14px; border-radius:4px; }
+
+  .env-body{
+    position:absolute; inset:0;
+    background:linear-gradient(170deg, var(--env) 0%, var(--env-dk) 100%);
+    box-shadow:
+      0 2px 0 rgba(255,255,255,.35) inset,
+      0 30px 60px -18px rgba(0,0,0,.75),
+      0 8px 20px -8px rgba(0,0,0,.5);
+  }
+  /* the two side gussets + bottom fold, drawn with gradients */
+  .env-body::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(to bottom right, transparent 49.3%, var(--env-sh) 49.5%, transparent 50%),
+      linear-gradient(to bottom left,  transparent 49.3%, var(--env-sh) 49.5%, transparent 50%);
+    opacity:.55;
+  }
+
+  .flap{
+    position:absolute;
+    left:0; right:0; top:0;
+    height:50%;
+    transform-origin:50% 0%;
+    transform-style:preserve-3d;
+    transition:transform 1.05s cubic-bezier(.62,.03,.3,1);
+    z-index:4;
+  }
+  .flap-face{
+    position:absolute; inset:0;
+    /* darker than the body so the closed flap reads as a separate
+       sheet rather than a crease in one flat rectangle */
+    background:linear-gradient(185deg, #CDBC9C 0%, #BFAC89 78%);
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+    backface-visibility:hidden;
+    filter:drop-shadow(0 3px 3px rgba(0,0,0,.28));
+  }
+  .is-open .flap{ transform:rotateX(-172deg); }
+
+  /* wax seal */
+  .seal{
+    position:absolute;
+    left:50%; top:50%;
+    width:clamp(3.6rem,11vw,4.9rem); aspect-ratio:1;
+    translate:-50% -50%;
+    z-index:6;
+    border-radius:47% 53% 51% 49% / 50% 47% 53% 50%;
+    background:
+      radial-gradient(70% 70% at 36% 30%, #B4453C 0%, var(--wax) 45%, var(--wax-dp) 100%);
+    box-shadow:
+      0 2px 5px rgba(0,0,0,.5),
+      0 0 0 1px rgba(0,0,0,.25) inset,
+      -3px -3px 8px rgba(255,255,255,.18) inset;
+    display:grid; place-items:center;
+    transition:transform .5s ease, opacity .5s ease;
+  }
+  .seal span{
+    font-family:var(--hand);
+    font-size:clamp(1.5rem,4.6vw,2.05rem);
+    color:#F2D89A;
+    text-shadow:0 1px 1px rgba(0,0,0,.45);
+    line-height:1;
+    /* optical centering for the glyph */
+    transform:translateY(.02em);
+  }
+  .is-open .seal{ transform:translate(-50%,-50%) scale(.7) rotate(-14deg); opacity:0; }
+
+  .env-hint{
+    position:absolute;
+    left:50%; bottom:-2.6rem; translate:-50% 0;
+    font-size:var(--step--1);
+    letter-spacing:.22em;
+    color:#8C8271;
+    white-space:nowrap;
+    animation:breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe{ 50%{ opacity:.4; } }
+  .is-open .env-hint{ opacity:0; transition:opacity .3s; }
+
+  /* once the card is up the envelope must stop holding the grid cell open */
+  .envelope.gone{
+    opacity:0;
+    transform:scale(.94) translateY(-1.5rem);
+    pointer-events:none;
+    visibility:hidden;
+    height:0;
+  }
+
+  /* ---------------- the card ---------------- */
+  .card{
+    position:relative;
+    width:min(100%, 33rem);
+    /* lets children size themselves against the card, not the window */
+    container-type:inline-size;
+    padding:clamp(2rem,6vw,3.4rem) clamp(1.5rem,6vw,3.2rem);
+    background:
+      linear-gradient(175deg, var(--paper-hi) 0%, var(--paper) 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.7) inset,
+      0 40px 70px -24px rgba(0,0,0,.8);
+    opacity:0;
+    transform:translateY(26px) scale(.97);
+    pointer-events:none;
+    transition:opacity .75s ease, transform .95s cubic-bezier(.2,.8,.24,1);
+    z-index:3;
+  }
+  .card.up{ opacity:1; transform:none; pointer-events:auto; }
+
+  /* deckled foil rule under the eyebrow */
+  .eyebrow{
+    font-size:var(--step--1);
+    letter-spacing:.34em;
+    text-transform:uppercase;
+    color:var(--grey);
+    text-align:center;
+  }
+  .rule{
+    width:100%; height:1px; margin:1.15rem 0 1.9rem;
+    background:linear-gradient(to right, transparent, var(--foil) 18%, var(--foil) 82%, transparent);
+    opacity:.55;
+  }
+
+  /* ---- handwriting reveal: per-character ink wipe ---- */
+  .script{
+    font-family:var(--hand);
+    font-size:var(--step-2);
+    line-height:1.85;
+    color:var(--ink);
+    text-align:center;
+    text-wrap:balance;
+    margin:0;
+  }
+  .script .ln{ display:block; }
+  .script .accent{ color:var(--wax); }
+
+  /* Nothing shows until the pen reaches it. `.armed` is set by JS the
+     moment the characters are built, so a no-JS visitor never gets it and
+     simply reads the whole invitation as plain text. */
+  .script.armed .ch{ visibility:hidden; }
+  .script.armed .ch.seen{ visibility:visible; }
+
+  .ch{
+    display:inline-block;
+    white-space:pre;
+    color:var(--ink);
+  }
+  .script .accent .ch{ color:var(--wax); }
+
+  .ch.pending{
+    /* clip a hard-edged gradient to the glyph and slide it across,
+       so the stroke fills in rather than the character fading in */
+    background-image:linear-gradient(to right, currentColor 50%, transparent 50%);
+    background-repeat:no-repeat;
+    background-size:220% 100%;
+    background-position:100% 0;
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent;
+    transition:background-position .17s linear;
+  }
+  .ch.inked{
+    background-position:0 0;
+    -webkit-text-fill-color:currentColor;
+  }
+
+  /* the nib: a small foil dot that travels along the text as it writes */
+  .nib{
+    position:absolute;
+    width:.42rem; height:.42rem;
+    border-radius:50%;
+    background:var(--foil);
+    box-shadow:0 0 10px 2px rgba(192,152,47,.55);
+    opacity:0;
+    pointer-events:none;
+    z-index:8;
+    transition:opacity .25s;
+  }
+
+  .question{
+    font-family:var(--hand);
+    font-size:var(--step-1);
+    text-align:center;
+    color:var(--ink-soft);
+    margin:1.6rem 0 0;
+  }
+
+  .recap{
+    font-size:var(--step--1);
+    letter-spacing:.14em;
+    text-align:center;
+    color:var(--grey);
+    margin:0;
+  }
+  .recap[hidden]{ display:none; }
+
+  /* ---------------- buttons ---------------- */
+  .choices{
+    display:flex;
+    gap:.9rem;
+    justify-content:center;
+    margin-top:2.2rem;
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  .choices.in{ opacity:1; transform:none; }
+
+  .btn{
+    font-family:var(--body);
+    font-size:var(--step-0);
+    letter-spacing:.06em;
+    padding:.82em 1.9em;
+    border-radius:2px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .25s ease, background .25s, color .25s;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible{ outline:2px solid var(--foil); outline-offset:3px; }
+
+  .btn-yes{
+    background:var(--wax); color:#F7EFDD;
+    box-shadow:0 6px 16px -6px rgba(140,47,42,.85);
+  }
+  .btn-yes:hover{ background:#7A2824; box-shadow:0 10px 22px -8px rgba(140,47,42,.95); }
+
+  .btn-no{
+    background:transparent; color:var(--grey);
+    border-color:#C4B79E;
+  }
+  .btn-no:hover{ color:var(--ink); border-color:var(--grey); }
+
+  /* quieter than the two real choices — it undoes, it doesn't decide */
+  .btn-back{
+    background:transparent;
+    color:var(--grey);
+    border-color:transparent;
+    text-decoration:underline;
+    text-underline-offset:.28em;
+    text-decoration-color:#C4B79E;
+    padding-inline:1em;
+  }
+  .btn-back:hover{ color:var(--ink); text-decoration-color:var(--grey); }
+
+  /* ---------------- outcome panels ---------------- */
+  /* Visibility must not depend on an animation finishing: the panel is
+     fully opaque by default and the entrance only animates from below. */
+  .panel{
+    display:none;
+    margin-top:1.4rem;
+    text-align:center;
+  }
+  .panel.on{
+    display:block;
+    /* `backwards`/`both` would pin frame 0 (opacity:0) whenever the
+       animation is not actually advancing — keep the resting state
+       visible and let the entrance play on top of it. */
+    animation:rise .6s cubic-bezier(.2,.8,.24,1) forwards;
+  }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(14px); }
+    to  { opacity:1; transform:none; }
+  }
+
+  .big-script{
+    font-family:var(--hand);
+    font-size:var(--step-2);
+    color:var(--wax);
+    margin:.2rem 0 .5rem;
+    line-height:1.5;
+  }
+
+  /* A question this short reads wrong broken across two lines. Keep it on
+     one and let it shrink to fit. `nowrap` alone would widen the card past
+     a narrow screen, so the line is also allowed to scale itself down
+     against its own container rather than forcing layout outward. */
+  /* One line, always inside the card.
+     Sized in `cqw` — percent of the CARD's width, not the viewport's. A
+     vw-based cap kept growing on wide screens while the card stayed capped
+     at 33rem, which pushed this line straight out of the paper. */
+  .big-script.one-line{
+    white-space:nowrap;
+    font-size:min(var(--step-2), 7.4cqw);
+    letter-spacing:-.015em;
+    min-width:0;
+    max-width:100%;
+  }
+  .note{
+    font-size:var(--step--1);
+    color:var(--grey);
+    line-height:1.7;
+    margin:.5rem 0 0;
+  }
+
+  /* The stickers are JPEGs on white, so a hard square would sit badly on
+     the paper. A soft radial fade blends the corners into the card. */
+  /* The cutouts are transparent PNGs of the cat alone, so they sit
+     directly on the paper — no disc, no mask, no blend mode. A soft
+     drop shadow keeps them from looking pasted on. */
+  .cat{
+    display:block;
+    height:auto;
+    filter:drop-shadow(0 3px 5px rgba(23,19,15,.18));
+  }
+
+  .cat-hero{
+    width:clamp(6.5rem, 26vw, 8.5rem);
+    margin:.4rem auto .7rem;
+  }
+
+  /* image next to the words, not above them */
+  .beside{
+    display:flex;
+    align-items:center;
+    gap:clamp(.5rem, 3vw, 1.1rem);
+    text-align:left;
+    margin:.2rem 0 .3rem;
+  }
+  .beside .cat{
+    width:clamp(4.6rem, 22vw, 6.4rem);
+    flex:0 0 auto;
+  }
+  .beside-text{
+    margin:0;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:.3rem;
+  }
+  /* exactly two lines: the question, then the instruction */
+  .beside-lead{
+    font-family:var(--hand);
+    /* container-relative for the same reason as .one-line: this sits next
+       to the picture, so it has even less room than the full card width */
+    font-size:min(var(--step-1), 5cqw);
+    color:var(--wax);
+    line-height:1.35;
+    white-space:nowrap;
+  }
+  /* the emoji is a colour glyph from another family and runs wider than
+     the surrounding script face — pull it back to the text's own rhythm */
+  .beside-lead .emo, .big-script .emo{
+    font-size:.78em;
+    margin-inline-start:.1em;
+    vertical-align:.04em;
+  }
+  .beside-sub{
+    font-size:var(--step--1);
+    color:var(--grey);
+    line-height:1.5;
+  }
+
+  /* ---- restaurant picker ---- */
+  .places{
+    list-style:none;
+    margin:1.5rem 0 0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+    text-align:left;
+  }
+
+  .place{
+    display:flex;
+    align-items:center;
+    gap:.8rem;
+    padding:.85rem .95rem;
+    background:rgba(255,255,255,.5);
+    border:1px solid #D3C6AC;
+    border-radius:2px;
+    cursor:pointer;
+    transition:border-color .2s, background .2s, box-shadow .2s;
+  }
+  .place:hover{ border-color:var(--grey); background:rgba(255,255,255,.8); }
+  .place:has(input:checked){
+    border-color:var(--wax);
+    background:rgba(140,47,42,.06);
+    box-shadow:0 0 0 1px var(--wax) inset;
+  }
+  .place:has(input:focus-visible){ outline:2px solid var(--foil); outline-offset:2px; }
+
+  .place input[type=radio]{
+    appearance:none;
+    width:1.05rem; height:1.05rem;
+    flex:0 0 auto;
+    border:1.5px solid #B3A68C;
+    border-radius:50%;
+    margin:0;
+    cursor:pointer;
+    position:relative;
+    transition:border-color .2s;
+  }
+  .place input[type=radio]:checked{ border-color:var(--wax); }
+  .place input[type=radio]:checked::after{
+    content:"";
+    position:absolute;
+    inset:3px;
+    border-radius:50%;
+    background:var(--wax);
+  }
+
+  .place-body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:.2rem; }
+  .place-name{
+    font-size:var(--step-0);
+    color:var(--ink);
+    line-height:1.35;
+  }
+  .place-addr{
+    font-size:var(--step--1);
+    color:var(--grey);
+    line-height:1.4;
+  }
+
+  .place-map{
+    flex:0 0 auto;
+    font-size:var(--step--1);
+    letter-spacing:.08em;
+    color:var(--wax);
+    text-decoration:none;
+    border:1px solid rgba(140,47,42,.35);
+    border-radius:2px;
+    padding:.4em .75em;
+    transition:background .2s, color .2s;
+  }
+  .place-map:hover{ background:var(--wax); color:var(--paper-hi); }
+  .place-map:focus-visible{ outline:2px solid var(--foil); outline-offset:2px; }
+
+  /* after submitting: the chosen row keeps its mark, the rest recede */
+  .places.settled .place{ cursor:default; }
+  .places.settled .place:not(:has(input:checked)){ opacity:.42; }
+  .places.settled .place:hover{ border-color:#D3C6AC; background:rgba(255,255,255,.5); }
+  .places.settled .place:has(input:checked):hover{
+    border-color:var(--wax);
+    background:rgba(140,47,42,.06);
+  }
+
+  .own-input{
+    font-family:var(--body);
+    font-size:var(--step-0);
+    color:var(--ink);
+    background:transparent;
+    border:0;
+    border-bottom:1px solid #C4B79E;
+    padding:.25em 0;
+    width:100%;
+  }
+  .own-input:focus{ outline:none; border-bottom-color:var(--wax); }
+
+  .field{
+    display:flex; flex-direction:column; gap:.55rem;
+    text-align:left;
+    margin:1.25rem auto 0;
+    max-width:26rem;
+  }
+  .field label{
+    font-size:var(--step--1);
+    letter-spacing:.12em;
+    color:var(--grey);
+  }
+  .field textarea{
+    font-family:var(--body);
+    font-size:var(--step-0);
+    color:var(--ink);
+    background:rgba(255,255,255,.55);
+    border:1px solid #C9BCA3;
+    border-radius:2px;
+    padding:.8em .9em;
+    min-height:5.2rem;
+    resize:vertical;
+    line-height:1.6;
+  }
+  .field textarea:focus{
+    outline:2px solid var(--foil); outline-offset:1px;
+    background:#FFF;
+  }
+
+  .row{ display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin-top:1rem; }
+  /* `hidden` must win over the flex display above */
+  .row[hidden]{ display:none; }
+
+
+  .status{
+    margin-top:.9rem;
+    font-size:var(--step--1);
+    color:var(--grey);
+    min-height:1.4em;
+  }
+  .status.warn{ color:var(--wax); }
+
+  /* ---------------- fireworks / confetti canvas ---------------- */
+  /* behind the card: the celebration frames the invitation, it doesn't
+     obscure the restaurant list the reader now has to work through */
+  #fx{
+    position:fixed; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:1;
+    display:none;
+  }
+  #fx.on{ display:block; }
+
+  /* ---------------- music ---------------- */
+  .music{
+    position:fixed;
+    right:max(.9rem, env(safe-area-inset-right));
+    bottom:max(.9rem, env(safe-area-inset-bottom));
+    z-index:80;
+    display:flex; align-items:center; gap:.5rem;
+    background:rgba(20,17,14,.72);
+    backdrop-filter:blur(8px);
+    border:1px solid rgba(192,152,47,.32);
+    color:#E4DACA;
+    font-family:var(--body);
+    font-size:var(--step--1);
+    padding:.6em .95em;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .25s, border-color .25s;
+  }
+  .music:hover{ background:rgba(30,26,21,.88); border-color:rgba(192,152,47,.6); }
+  .music:focus-visible{ outline:2px solid var(--foil); outline-offset:2px; }
+  .eq{ display:flex; align-items:flex-end; gap:2px; height:.85rem; }
+  .eq i{
+    width:2px; background:var(--foil); height:30%;
+    animation:eq .9s ease-in-out infinite;
+  }
+  .eq i:nth-child(2){ animation-delay:.15s; }
+  .eq i:nth-child(3){ animation-delay:.3s; }
+  .eq i:nth-child(4){ animation-delay:.45s; }
+  @keyframes eq{ 50%{ height:100%; } }
+  .music.paused .eq i{ animation-play-state:paused; height:30%; }
+
+  #yt{ position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; left:-10px; top:-10px; border:0; }
+  #bgm{ position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; left:-10px; top:-10px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+    .flap, .card, .seal, .choices, .ch{ transition-duration:.01ms !important; }
+    .env-hint{ animation:none; }
+  }
+</style>
+
+<div class="stage">
+  <button class="envelope" id="env" aria-label="打開邀請函">
+    <div class="env-body"></div>
+    <div class="flap"><div class="flap-face"></div></div>
+    <div class="seal"><span>邀</span></div>
+    <div class="env-hint">輕觸開啟</div>
+  </button>
+
+  <article class="card" id="card" aria-live="polite">
+    <div class="eyebrow">A Standing Invitation</div>
+    <div class="rule"></div>
+
+    <p class="script" id="script">
+      <span class="ln" data-line="誠摯邀請妳"></span>
+      <span class="ln" data-line="10 / 3（六）上午 10 點"></span>
+      <span class="ln accent" data-line="一起吃早午餐"></span>
+    </p>
+
+    <p class="question" id="question" hidden>是否願意出席？</p>
+
+    <!-- shown after answering, so the card still says what was agreed -->
+    <p class="recap" id="recap" hidden>10 / 3（六）上午 10 點・早午餐</p>
+
+    <div class="choices" id="choices">
+      <button class="btn btn-yes" id="yes">我願意</button>
+      <button class="btn btn-no"  id="no">那天不行</button>
+    </div>
+
+    <!-- accepted -->
+    <div class="panel" id="p-yes">
+      <!-- the picture stands where the line used to; the closing words
+           arrive only once the restaurant is settled -->
+      <img class="cat cat-hero" id="yes-cat" src="yes-cat.png" alt="" width="99" height="120">
+      <p class="big-script one-line" id="yes-done" hidden>那就這麼決定了，到時候見<span class="emo">🤙🏻</span></p>
+      <p class="note" id="yes-hint">餐廳交給妳挑，點店名可以看 Google 地圖。</p>
+
+      <ul class="places" id="places">
+        <li>
+          <label class="place">
+            <input type="radio" name="venue" value="EGG BUN Breakfast Sandwich &amp; Espresso 新莊">
+            <span class="place-body">
+              <span class="place-name">EGG BUN Breakfast Sandwich &amp; Espresso 新莊</span>
+              <span class="place-addr">新北市新莊區思源路 115 號</span>
+            </span>
+            <a class="place-map"
+               href="https://www.google.com/maps/search/?api=1&amp;query=EGG%20BUN%20Breakfast%20Sandwich%20%26%20Espresso%20%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E8%8E%8A%E5%8D%80%E6%80%9D%E6%BA%90%E8%B7%AF115%E8%99%9F"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="在 Google 地圖開啟 EGG BUN 新莊">地圖</a>
+          </label>
+        </li>
+        <li>
+          <label class="place">
+            <input type="radio" name="venue" value="歐浮找餐 Oops!Foody 新莊輔大店">
+            <span class="place-body">
+              <span class="place-name">歐浮找餐 Oops!Foody 新莊輔大店</span>
+              <span class="place-addr">新北市新莊區中正路 514 巷 13 號 1 樓</span>
+            </span>
+            <a class="place-map"
+               href="https://www.google.com/maps/search/?api=1&amp;query=%E6%AD%90%E6%B5%AE%E6%89%BE%E9%A4%90%20%E6%96%B0%E8%8E%8A%E8%BC%94%E5%A4%A7%E5%BA%97%20%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E8%8E%8A%E5%8D%80%E4%B8%AD%E6%AD%A3%E8%B7%AF514%E5%B7%B713%E8%99%9F"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="在 Google 地圖開啟 歐浮找餐 新莊輔大店">地圖</a>
+          </label>
+        </li>
+        <li>
+          <label class="place">
+            <input type="radio" name="venue" value="Reversion cafe_反轉點.咖啡">
+            <span class="place-body">
+              <span class="place-name">Reversion cafe_反轉點.咖啡</span>
+              <span class="place-addr">新北市新莊區龍安路 254 巷 1 號</span>
+            </span>
+            <a class="place-map"
+               href="https://www.google.com/maps/search/?api=1&amp;query=Reversion%20cafe%20%E5%8F%8D%E8%BD%89%E9%BB%9E%E5%92%96%E5%95%A1%20%E6%96%B0%E5%8C%97%E5%B8%82%E6%96%B0%E8%8E%8A%E5%8D%80%E9%BE%8D%E5%AE%89%E8%B7%AF254%E5%B7%B71%E8%99%9F"
+               target="_blank" rel="noopener noreferrer"
+               aria-label="在 Google 地圖開啟 Reversion cafe 反轉點咖啡">地圖</a>
+          </label>
+        </li>
+        <li>
+          <label class="place place-own">
+            <input type="radio" name="venue" value="__own__" id="venue-own">
+            <span class="place-body">
+              <span class="place-name">我有別的想法</span>
+              <input type="text" id="own-venue" class="own-input"
+                     placeholder="寫下妳想去的店" aria-label="自己填入想去的餐廳">
+            </span>
+          </label>
+        </li>
+      </ul>
+
+      <div class="row">
+        <button class="btn btn-yes" id="send-venue">就這間</button>
+        <button class="btn btn-back" data-back>重新選擇</button>
+      </div>
+
+      <div class="row" id="r-yes-row" hidden>
+        <button class="btn btn-back" data-back>重新選擇</button>
+      </div>
+      <p class="status" id="s-yes"></p>
+    </div>
+
+    <!-- declined -->
+    <div class="panel" id="p-no">
+      <!-- image beside the words; the two lines are the message itself -->
+      <div class="beside" id="no-head">
+        <img class="cat" id="no-cat" src="no-cat.png" alt="" width="159" height="187">
+        <p class="beside-text">
+          <span class="beside-lead" id="no-lead">那…什麼時候可以呢？</span>
+          <span class="beside-sub" id="no-sub">寫下妳方便的時間，我配合妳。</span>
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="when">妳方便的時間</label>
+        <textarea id="when" placeholder="例如：10/4（日）早上 11 點，或這兩週的週末都可以"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn btn-yes" id="send-when">送出時間</button>
+        <button class="btn btn-back" data-back>回上一步</button>
+      </div>
+      <div class="row" id="r-no-row" hidden>
+        <button class="btn btn-back" data-back>重新選擇</button>
+      </div>
+      <p class="status" id="s-no"></p>
+    </div>
+  </article>
+</div>
+
+
+<canvas id="fx"></canvas>
+
+<button class="music paused" id="music" aria-pressed="false">
+  <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+  <span id="music-label">播放音樂</span>
+</button>
+<iframe id="yt" title="背景音樂" allow="autoplay" tabindex="-1" aria-hidden="true"></iframe>
+<!-- Published beside this page, so same-origin: no CSP or embed policy can
+     block it. The YouTube path below is only a fallback if this ever fails. -->
+<audio id="bgm" src="tokyo-lofi.mp3" loop preload="auto"></audio>
+
+<script>
+(function(){
+  "use strict";
+
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------------------------------------------------------
+     1. Handwriting reveal
+     Each line is split into per-character spans; a background
+     gradient clipped to the glyph wipes left-to-right, so the
+     ink appears to flow rather than the character popping in.
+     --------------------------------------------------------- */
+  const lines = [...document.querySelectorAll("#script .ln")];
+  const chars = [];
+
+  // Arm before the first paint: the characters exist but stay invisible,
+  // so the card never flashes the finished invitation.
+  if (!reduce) $("script").classList.add("armed");
+
+  for (const ln of lines){
+    const text = ln.dataset.line || "";
+    for (const c of text){
+      const s = document.createElement("span");
+      s.className = "ch";
+      s.textContent = c;
+      ln.appendChild(s);
+      chars.push(s);
+    }
+  }
+
+  const nib = document.createElement("span");
+  nib.className = "nib";
+  $("card").appendChild(nib);
+
+  function moveNib(el){
+    const cb = $("card").getBoundingClientRect();
+    const r  = el.getBoundingClientRect();
+    nib.style.left = (r.right - cb.left - 2) + "px";
+    nib.style.top  = (r.bottom - cb.top - 6) + "px";
+  }
+
+  // Reveal everything and show the controls. Safe to call twice.
+  function finishWriting(){
+    chars.forEach(c => { c.classList.remove("pending"); c.classList.add("seen"); });
+    nib.style.opacity = "0";
+    $("question").hidden = false;
+    $("choices").classList.add("in");
+  }
+
+  function write(){
+    if (reduce){ finishWriting(); return; }
+
+    chars.forEach(c => c.classList.add("pending"));
+    nib.style.opacity = "1";
+
+    let i = 0;
+    // Backstop: however the per-character loop fares, the invitation is
+    // fully legible by this deadline.
+    const guard = setTimeout(finishWriting, 260 + chars.length * 130 + 1500);
+
+    const tick = () => {
+      if (i >= chars.length){
+        clearTimeout(guard);
+        finishWriting();
+        return;
+      }
+      const ch = chars[i];
+      ch.classList.add("seen");     // now visible, mid-wipe
+      ch.classList.add("inked");
+      // hand off to the painted resting state once the wipe has played
+      setTimeout(() => ch.classList.remove("pending"), 200);
+      moveNib(ch);
+      const c = ch.textContent;
+      const pause = /\s/.test(c) ? 40 : /[（）／/、，。？]/.test(c) ? 90 : 118;
+      i++;
+      setTimeout(tick, pause);
+    };
+    setTimeout(tick, 260);
+  }
+
+  /* ---------------------------------------------------------
+     2. Opening the envelope
+     --------------------------------------------------------- */
+  let opened = false;
+  const env = $("env");
+
+  function open(){
+    if (opened) return;
+    opened = true;
+    startMusic();                       // the one gesture mobile will honour
+    env.classList.add("is-open");
+    env.setAttribute("aria-expanded","true");
+    const flapMs = reduce ? 0 : 1000;
+    setTimeout(() => {
+      env.classList.add("gone");
+      $("card").classList.add("up");
+      setTimeout(write, reduce ? 0 : 420);
+    }, flapMs);
+  }
+  env.addEventListener("click", open);
+
+  /* ---------------------------------------------------------
+     3. Recording the answer
+     Primary channel: the db capability, read back by the host.
+     Fallback: render the answer on screen + copy button, so an
+     invitee outside the org can still hand the result over.
+     --------------------------------------------------------- */
+  /* The page is public — no sign-in. The answer is posted to Web3Forms,
+     which emails it on. The access key is a send-only public token: it
+     cannot read anything or change settings, so it is safe in page source.
+     Delivery is a real form POST; see mailReply below. */
+  const W3_KEY    = "a9523b48-ea54-47a2-b50e-43770258a082";
+  let lastAnswer  = null;   // {answer, venue, when}
+
+  // emoji carries its own class so it can be sized against the script face
+  function setLead(el, text, emoji){
+    el.textContent = text;
+    if (emoji){
+      const s = document.createElement("span");
+      s.className = "emo";
+      s.textContent = emoji;
+      el.appendChild(s);
+    }
+  }
+
+  function record(answer, when, venue){
+    lastAnswer = { answer, when: when || "", venue: venue || "" };
+    return { ok:true };
+  }
+
+  /* Submit the real form rather than fetch(): a form POST is a navigation,
+     so it is allowed where cross-origin fetch/XHR is not. The response lands
+     in the hidden iframe and is never read — the page cannot see across
+     origins — so success is reported once the submission has been handed off.
+     There is no confirmation channel back; that is the cost of this route. */
+  async function mailReply(a){
+    const yes = a.answer === "accepted";
+    try{
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Accept":"application/json" },
+        body: JSON.stringify({
+          access_key: W3_KEY,
+          subject: yes ? "【早午餐邀請】她答應了 ✓" : "【早午餐邀請】她那天不行 ✗",
+          from_name: "早午餐邀請函",
+          "回覆":     yes ? "願意出席" : "那天不行",
+          "想去的店": a.venue || "—",
+          "方便的時間": a.when || "—",
+          "邀約":     "10/3（六）上午 10 點・早午餐"
+        })
+      });
+      const j = await res.json().catch(() => ({}));
+      return !!j.success;
+    }catch(_){
+      return false;
+    }
+  }
+
+  // Send, then say plainly what happened. On failure the invitee is given
+  // the one-tap LINE route rather than being told to try again.
+  async function deliver(statusEl){
+    statusEl.className = "status";
+    statusEl.textContent = "送出中…";
+    const ok = await mailReply(lastAnswer);
+    if (ok){
+      statusEl.textContent = "✓ 已送出，他收到囉";
+    }else{
+      statusEl.className = "status warn";
+      statusEl.textContent = "送出沒成功，按「重新選擇」再試一次";
+    }
+  }
+
+  function choose(kind){
+    // collapse the invitation itself so the answer owns the card
+    $("choices").style.display = "none";
+    $("question").hidden = true;
+    $("script").style.display = "none";
+    $("recap").hidden = false;
+    if (kind === "yes"){
+      $("p-yes").classList.add("on");
+      celebrate();
+      // the answer is recorded once the restaurant is confirmed, so the
+      // stored reply always carries the venue with it
+    }else{
+      $("p-no").classList.add("on");
+      $("when").focus({ preventScroll:true });
+    }
+  }
+
+  $("yes").addEventListener("click", () => choose("yes"));
+  $("no").addEventListener("click",  () => choose("no"));
+
+  // Undo: put the card back to the question, and clear anything already
+  // recorded so a changed mind never leaves a stale answer on the server.
+  function resetChoice(){
+    stopFx();
+
+    $("p-yes").classList.remove("on");
+    $("p-no").classList.remove("on");
+
+    $("r-no-row").hidden = true;
+    $("r-yes-row").hidden = true;
+    $("s-yes").textContent = "";
+    $("s-no").textContent = "";
+    $("s-yes").className = "status";
+    $("s-no").className  = "status";
+
+    $("when").value = "";
+    $("when").readOnly = false;
+    $("send-when").closest(".row").hidden = false;
+    $("send-when").disabled = false;
+    $("send-when").textContent = "送出時間";
+
+    document.querySelectorAll('input[name="venue"]').forEach(r => {
+      r.checked = false;
+      r.disabled = false;
+    });
+    $("own-venue").value = "";
+    $("own-venue").readOnly = false;
+    $("places").classList.remove("settled");
+    $("send-venue").closest(".row").hidden = false;
+    $("send-venue").disabled = false;
+    $("send-venue").textContent = "就這間";
+
+    // put the pictures and their words back to the unanswered state
+    $("yes-done").hidden = true;
+    $("yes-hint").hidden = false;
+    $("no-cat").src = "no-cat.png";
+    setLead($("no-lead"), "那…什麼時候可以呢？", "");
+    $("no-sub").textContent  = "寫下妳方便的時間，我配合妳。";
+
+    $("recap").hidden = true;
+    $("script").style.display = "";
+    // the invitation may have been answered before it finished writing —
+    // bring it to its complete state rather than restoring a half-written line
+    finishWriting();
+    $("choices").style.display = "";
+
+    // nothing has left the device unless she tapped send, so undoing is
+    // just forgetting the draft
+    lastAnswer = null;
+  }
+
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-back]")) resetChoice();
+  });
+
+  // The map link lives inside the label, so a tap on it would otherwise
+  // also select that radio. Opening the map is a look, not a choice.
+  document.querySelectorAll(".place-map").forEach(a => {
+    a.addEventListener("click", (e) => e.stopPropagation());
+  });
+
+  // typing your own venue implies choosing it
+  $("own-venue").addEventListener("input", () => { $("venue-own").checked = true; });
+  // the text field sits inside the label; don't let a click toggle the radio away
+  $("own-venue").addEventListener("click", (e) => e.stopPropagation());
+
+  function chosenVenue(){
+    const picked = document.querySelector('input[name="venue"]:checked');
+    if (!picked) return null;
+    if (picked.value === "__own__"){
+      const own = $("own-venue").value.trim();
+      return own || null;
+    }
+    return picked.value;
+  }
+
+  $("send-venue").addEventListener("click", async () => {
+    const venue = chosenVenue();
+    if (!venue){
+      $("s-yes").className = "status warn";
+      $("s-yes").textContent = document.querySelector('input[name="venue"]:checked')
+        ? "請寫下妳想去的店名。"
+        : "請先選一間，或寫下妳想去的店。";
+      return;
+    }
+    $("send-venue").disabled = true;
+    $("send-venue").textContent = "送出中…";
+    // the closing words replace the prompt now that it is settled; the
+    // list stays so the chosen restaurant is still on screen, but the
+    // unpicked options fade back and nothing more can be changed
+    $("yes-hint").hidden = true;
+    $("yes-done").hidden = false;
+    $("places").classList.add("settled");
+    document.querySelectorAll('input[name="venue"]').forEach(i => { i.disabled = true; });
+    $("own-venue").readOnly = true;
+    $("send-venue").closest(".row").hidden = true;
+    $("r-yes-row").hidden = false;
+    record("accepted", "", venue);
+    deliver($("s-yes"));
+    $("send-venue").textContent = "已送出";
+  });
+
+  $("send-when").addEventListener("click", async () => {
+    const when = $("when").value.trim();
+    if (!when){
+      $("s-no").className = "status warn";
+      $("s-no").textContent = "請先寫下妳方便的時間。";
+      $("when").focus();
+      return;
+    }
+    $("send-when").disabled = true;
+    $("send-when").textContent = "送出中…";
+    // the mood turns once a time is offered
+    $("no-cat").src = "time-cat.png";
+    setLead($("no-lead"), "已收到，肯定盡量配合", "👍🏻");
+    $("no-sub").textContent = "我再跟妳敲確切的時間。";
+    $("when").readOnly = true;
+    $("send-when").closest(".row").hidden = true;
+    $("r-no-row").hidden = false;
+    record("declined", when);
+    deliver($("s-no"));
+    $("send-when").textContent = "已送出";
+  });
+
+  /* ---------------------------------------------------------
+     4. Fireworks + petals on acceptance
+     --------------------------------------------------------- */
+  // handles for tearing the celebration down on undo
+  let fxStop = null;
+
+  function stopFx(){
+    if (fxStop){ fxStop(); fxStop = null; }
+  }
+
+  function celebrate(){
+    if (reduce) return;
+    const cv = $("fx");
+    const ctx = cv.getContext("2d");
+    cv.classList.add("on");
+
+    let W, H, dpr;
+    function size(){
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    size();
+    addEventListener("resize", size);
+
+    const sparks = [];
+    const petals = [];
+    const GOLD = ["#C0982F","#E4C05A","#F2E0A8"];
+    const PINK = ["#E8A0A8","#F2C7CB","#D97E8C","#F7E3E6"];
+
+    function burst(x,y){
+      const n = 58 + Math.floor(Math.random()*26);
+      const hue = Math.random();
+      for (let i=0;i<n;i++){
+        const a = (Math.PI*2*i)/n + Math.random()*.25;
+        const sp = 2.2 + Math.random()*3.6;
+        sparks.push({
+          x, y,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp,
+          life: 1,
+          decay: .008 + Math.random()*.012,
+          col: hue < .5 ? GOLD[i%3] : PINK[i%4],
+          r: 1.1 + Math.random()*1.5
+        });
+      }
+    }
+
+    function petal(){
+      petals.push({
+        x: Math.random()*W,
+        y: -20 - Math.random()*80,
+        vy: .7 + Math.random()*1.1,
+        vx: (Math.random()-.5)*.7,
+        rot: Math.random()*Math.PI,
+        vr: (Math.random()-.5)*.06,
+        w: 6 + Math.random()*7,
+        h: 9 + Math.random()*9,
+        col: PINK[Math.floor(Math.random()*PINK.length)],
+        life: 1
+      });
+    }
+
+    let t0 = performance.now();
+    let shots = 0;
+    let raf;
+
+    // opening volley, then a few more
+    burst(W*0.5, H*0.42);
+    const shotTimer = setInterval(() => {
+      if (shots++ > 6) { clearInterval(shotTimer); return; }
+      burst(W*(0.18 + Math.random()*0.64), H*(0.22 + Math.random()*0.34));
+    }, 620);
+
+    for (let i=0;i<34;i++) petal();
+    const petalTimer = setInterval(() => {
+      if (performance.now() - t0 > 7000){ clearInterval(petalTimer); return; }
+      petal(); petal();
+    }, 180);
+
+    fxStop = () => {
+      clearInterval(shotTimer);
+      clearInterval(petalTimer);
+      cancelAnimationFrame(raf);
+      removeEventListener("resize", size);
+      sparks.length = 0;
+      petals.length = 0;
+      ctx.clearRect(0,0,W,H);
+      cv.classList.remove("on");
+    };
+
+    function frame(){
+      ctx.clearRect(0,0,W,H);
+
+      for (let i=sparks.length-1;i>=0;i--){
+        const s = sparks[i];
+        s.x += s.vx; s.y += s.vy;
+        s.vy += .045;          // gravity
+        s.vx *= .985; s.vy *= .985;
+        s.life -= s.decay;
+        if (s.life <= 0){ sparks.splice(i,1); continue; }
+        ctx.globalAlpha = Math.max(s.life,0);
+        ctx.fillStyle = s.col;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      for (let i=petals.length-1;i>=0;i--){
+        const p = petals[i];
+        p.y += p.vy; p.x += p.vx + Math.sin(p.y/42)*.5;
+        p.rot += p.vr;
+        if (p.y > H + 40){ petals.splice(i,1); continue; }
+        ctx.globalAlpha = .9;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.col;
+        ctx.beginPath();
+        ctx.ellipse(0,0,p.w/2,p.h/2,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.globalAlpha = 1;
+
+      if (sparks.length || petals.length){
+        raf = requestAnimationFrame(frame);
+      }else{
+        cv.classList.remove("on");
+        cancelAnimationFrame(raf);
+      }
+    }
+    frame();
+  }
+
+  /* ---------------------------------------------------------
+     5. Background music
+     Mobile browsers (iOS Safari, the LINE in-app browser) refuse
+     autoplay with sound. It is started by the envelope tap — a
+     real user gesture — and the button lets it be toggled.
+     --------------------------------------------------------- */
+  const LIST  = "PLuLr_tQFDuWIKgVpl2iSmf_dpuAWS6lHV";
+  const WATCH = "https://www.youtube.com/playlist?list=" + LIST;
+  const yt    = $("yt");
+  const bgm   = $("bgm");
+  const mbtn  = $("music");
+  const mlabel= $("music-label");
+
+  let playing  = false;
+  let fileDead = false;   // the bundled track failed to load (404/decode)
+  let linkMode = false;   // no in-page audio possible: open YouTube instead
+
+  // A missing or undecodable file is the only reason to abandon the track;
+  // `canplay` may not have fired yet at first tap, so absence proves nothing.
+  bgm.addEventListener("error", () => { fileDead = true; }, { once:true });
+
+  function setBtn(state){
+    if (state === "playing"){
+      mbtn.classList.remove("paused");
+      mbtn.setAttribute("aria-pressed","true");
+      mlabel.textContent = "暫停音樂";
+    } else if (state === "link"){
+      mbtn.classList.add("paused");
+      mbtn.setAttribute("aria-pressed","false");
+      mlabel.textContent = "在 YouTube 開啟歌單";
+    } else {
+      mbtn.classList.add("paused");
+      mbtn.setAttribute("aria-pressed","false");
+      mlabel.textContent = "播放音樂";
+    }
+  }
+
+  function toLinkMode(){
+    linkMode = true;
+    playing = false;
+    setBtn("link");
+  }
+
+  function startYouTube(){
+    let frameOK = false;
+    yt.addEventListener("load", () => { frameOK = true; }, { once:true });
+    yt.src = "https://www.youtube-nocookie.com/embed/videoseries?list=" + LIST +
+             "&autoplay=1&loop=1&controls=0&playsinline=1&modestbranding=1&rel=0";
+    playing = true;
+    setBtn("playing");
+    setTimeout(() => { if (!frameOK) toLinkMode(); }, 2600);
+  }
+
+  function startMusic(){
+    if (playing || linkMode) return;
+
+    // The bundled track is the real source; YouTube is only a safety net.
+    if (!fileDead){
+      bgm.volume = 0.55;
+      const p = bgm.play();
+      playing = true;
+      setBtn("playing");
+      if (p && p.catch){
+        p.catch(() => {
+          // autoplay refused or the file is unusable — fall back once
+          playing = false;
+          if (fileDead) startYouTube(); else toLinkMode();
+        });
+      }
+      return;
+    }
+    startYouTube();
+  }
+
+  function stopMusic(){
+    bgm.pause();
+    yt.removeAttribute("src");
+    playing = false;
+    setBtn("paused");
+  }
+
+  mbtn.addEventListener("click", () => {
+    if (linkMode){ window.open(WATCH, "_blank", "noopener"); return; }
+    playing ? stopMusic() : startMusic();
+  });
+
+})();
+</script>
+
+</body>
+</html>
